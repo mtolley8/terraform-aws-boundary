@@ -12,3 +12,12 @@ output "s3command" {
     data.aws_s3_bucket_objects.cloudinit.keys[0]
   )
 }
+
+output "kms_key_alias_name" {
+  value = aws_kms_alias.kms_key_alias.name
+}
+
+
+output "aws_kms_key" {
+  value = aws_kms_key.key.id
+}

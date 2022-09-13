@@ -64,7 +64,7 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  default     = ""
+  default     = "/Users/mtolley/.ssh/id_rsa.pub"
   description = "The name of the key pair"
   type        = string
 }
@@ -118,6 +118,12 @@ A comma-separated list of subnet IDs for your virtual private cloud
 EOF
 
   type = list(string)
+}
+
+variable "associate_public_ip_address" {
+  description = "(LC) Associate a public ip address with an instance in a VPC"
+  type        = bool
+  default     = null
 }
 
 variable "write_files" {

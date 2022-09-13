@@ -1,5 +1,5 @@
 variable "boundary_release" {
-  default     = "0.1.0"
+  default     = "0.8.1"
   description = "The version of Boundary to install"
   type        = string
 }
@@ -14,7 +14,7 @@ EOF
 }
 
 variable "desired_capacity" {
-  default = 3
+  default = 1
 
   description = <<EOF
 The desired capacity is the initial capacity of the Auto Scaling group
@@ -33,25 +33,25 @@ EOF
 }
 
 variable "instance_type" {
-  default     = "t3.small"
+  default     = "t2.micro"
   description = "Specifies the instance type of the EC2 instance"
   type        = string
 }
 
 variable "key_name" {
-  default     = ""
+  default     = "/Users/mtolley/.ssh/id_rsa.pub"
   description = "The name of the key pair"
   type        = string
 }
 
 variable "max_size" {
-  default     = 3
+  default     = 1
   description = "The maximum size of the group"
   type        = number
 }
 
 variable "min_size" {
-  default     = 3
+  default     = 1
   description = "The minimum size of the group"
   type        = number
 }
@@ -81,3 +81,22 @@ variable "vpc_id" {
   description = "The ID of the VPC"
   type        = string
 }
+
+variable "aws_public_key" {
+  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf8OOfOxkzLIyeBrxbNAFd9yd5gp9z1zDj1Ee3WR173emkodHRsaLn99JGHqFbBRsTRe7yMuPyo+ZIV/U5RM/kDmtU8fpqYLllwRdgkOcw9uC9erpWQ6o6moSjas0Dl98PbMZrM9Ttn73Zmfyu3PzR83sCFKENvugrS6MyP+pmOVoKZhbrIwfCie1h2i5rlbmrCY/0A7iGL23AMlR+KKmc5A3YYaZ1q/uX65Y6XDUP7N8AGoYnkFLUw/E+l+gX6J96y1ouWi4DCmfhrUiGz/7n6muUaDNPandMFtwYp1rIfAIS7N+pAqMnm7NF6NSyipcTkHQD/mnf87n0+GqW6xCp mtolley@BRI-MA-KP999JKX26"
+  description = "Public key for SSH"
+  type        = string
+
+}
+
+variable "kms_key_alias" {
+  type    = string
+  default = "boundary_S3_kms"
+}
+
+#variable "controller_name" {
+#  default     = "GCSE-PRD-AWS-EU.W1-BNDRY-Ctrl-"
+#  description = "Naming convention for AS group"
+#  type        = string
+
+#}

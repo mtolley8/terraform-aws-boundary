@@ -20,7 +20,7 @@ EOF
 }
 
 variable "desired_capacity" {
-  default = 3
+  default = 1
 
   description = <<EOF
 The desired capacity is the initial capacity of the Auto Scaling group
@@ -39,7 +39,7 @@ EOF
 }
 
 variable "instance_type" {
-  default     = "t3.small"
+  default     = "t2.micro"
   description = "Specifies the instance type of the EC2 instance"
   type        = string
 }
@@ -51,7 +51,7 @@ variable "ip_addresses" {
 }
 
 variable "key_name" {
-  default     = ""
+  default     = "/Users/mtolley/.ssh/id_rsa.pub"
   description = "The name of the key pair"
   type        = string
 }
@@ -62,13 +62,13 @@ variable "kms_key_id" {
 }
 
 variable "max_size" {
-  default     = 3
+  default     = 1
   description = "The maximum size of the group"
   type        = number
 }
 
 variable "min_size" {
-  default     = 3
+  default     = 1
   description = "The minimum size of the group"
   type        = number
 }
@@ -96,5 +96,17 @@ EOF
 
 variable "vpc_id" {
   description = "The ID of the VPC"
+  type        = string
+}
+
+variable "worker_name_pfx" {
+  description = "VM Names"
+  default   = "GCSE-PRD-AWS-EU.W1-BNDRY-Wrkr"
+  type      = string 
+}
+
+variable "vm_count" {
+  description = "Number of VMs"
+  default     = 1
   type        = string
 }

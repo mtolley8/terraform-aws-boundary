@@ -72,10 +72,12 @@ resource "aws_security_group" "worker" {
   vpc_id = var.vpc_id
 }
 
+
 module "workers" {
   source = "../boundary"
+  count = var.vm_count  # Count value read from variable
 
-  auto_scaling_group_name = "BoundaryWorker"
+  auto_scaling_group_name = "${var.worker_name_pfx}-${count.index + 1}"  # Name constructed using count and pfx
   boundary_release        = var.boundary_release
   bucket_name             = var.bucket_name
   desired_capacity        = var.desired_capacity
@@ -108,7 +110,8 @@ data "aws_iam_policy_document" "kms" {
     actions = [
       "kms:Decrypt",
       "kms:DescribeKey",
-      "kms:Encrypt"
+      "kms:Encrypt",
+      "kms:EnableKeyRotation"
     ]
 
     effect = "Allow"

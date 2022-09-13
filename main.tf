@@ -2,6 +2,13 @@ terraform {
   required_version = "~> 1.0"
 }
 
+# Configure the AWS Provider
+provider "aws" {
+  region                   = "eu-west-1"
+  shared_credentials_file  = "$HOME/Users/mtolley.aws/credentials"
+  profile                  = "315928467448_AdminAccess-Middle-Standard"
+}
+
 locals {
   image_id = data.aws_ami.boundary.id
 
@@ -34,16 +41,47 @@ data "aws_s3_bucket_objects" "cloudinit" {
 }
 
 resource "random_string" "boundary" {
-  length  = 16
+  length  = 4
   special = false
   upper   = false
 }
 
 resource "aws_s3_bucket" "boundary" {
-  acl           = "private"
   bucket        = "boundary-${random_string.boundary.result}"
   force_destroy = true
   tags          = local.tags
+}
+
+resource "aws_kms_key" "key" {
+  description             = var.kms_key_description
+  tags                    = var.tags
+}
+resource "aws_kms_alias" "kms_key_alias" {
+  name          = "alias/${lower(var.kms_key_alias)}"
+  target_key_id = aws_kms_key.key.key_id
+}
+
+resource "aws_s3_bucket_acl" "boundary" {
+  bucket        = aws_s3_bucket.boundary.id
+  acl           = "private"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3_bucket_encryption" {
+  bucket = aws_s3_bucket.boundary.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.key.key_id
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "versioning_s3" {
+  bucket = aws_s3_bucket.boundary.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 module "controllers" {

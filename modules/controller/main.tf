@@ -124,6 +124,12 @@ resource "aws_security_group" "postgresql" {
   vpc_id = var.vpc_id
 }
 
+resource "aws_key_pair" "deployer" {
+  key_name   = var.key_name
+  public_key = var.aws_public_key
+  }
+
+
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 6.5"
@@ -136,7 +142,7 @@ module "alb" {
   ]
 
   load_balancer_type = "application"
-  name               = "boundary"
+  name               = "GCSE-PRD-AWS-EUW1-BNDRY-ALB"
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnets
   tags               = var.tags
@@ -165,7 +171,7 @@ module "postgresql" {
   backup_retention_period = 0
   backup_window           = "03:00-06:00"
   engine                  = "postgres"
-  engine_version          = "12.4"
+  engine_version          = "12.8"
   family                  = "postgres12"
   identifier              = "boundary"
   instance_class          = "db.t2.micro"
@@ -183,12 +189,14 @@ module "postgresql" {
 
 module "controllers" {
   source = "../boundary"
+  # count = 0
 
   after_start = [
     "grep 'Initial auth information' /var/log/cloud-init-output.log && aws s3 cp /var/log/cloud-init-output.log s3://${var.bucket_name}/{{v1.local_hostname}}/cloud-init-output.log || true"
   ]
 
-  auto_scaling_group_name = "BoundaryController"
+  # auto_scaling_group_name = "$(var.auto_scaling_group_name)${count.index + 1}"
+  auto_scaling_group_name = "GCSE-PRD-AWS-EU.W1-BNDRY-Controller"
 
   # Initialize the DB before starting the service and install the AWS
   # CLI.
@@ -331,6 +339,60 @@ resource "aws_instance" "bastion" {
   instance_type               = "t3.micro"
   key_name                    = var.key_name
   subnet_id                   = var.public_subnets[0]
-  tags                        = merge(var.tags, { Name = "Boundary Bastion" })
+  tags                        = merge(var.tags, { Name = "GCSE-PRD-AWS-EU.W1-BNDRY-Bastion" })
   vpc_security_group_ids      = [one(aws_security_group.bastion[*].id)]
 }
+
+
+#
+# authentication setup
+#
+
+provider "boundary" {
+
+    addr = "http://10.0.0.0:80"
+    #addr = var.associate_public_ip_address
+
+# Root KMS configuration block: this is the root key for Boundary
+# Use a production KMS such as AWS KMS in production installs
+kms "aead" {
+  purpose = "root"
+  aead_type = "aes-gcm"
+  key = "sP1fnF5Xz85RrXyELHFeZg9Ad2qt4Z4bgNHVGtD6ung="
+  key_id = "global_root"
+}
+
+# Worker authorization KMS
+# Use a production KMS such as AWS KMS for production installs
+# This key is the same key used in the worker configuration
+kms "aead" {
+  purpose = "worker-auth"
+  aead_type = "aes-gcm"
+  key = "8fZBjCUfN0TzjEGLQldGY4+iE9AkOvCfjh7+p0GtRBQ="
+  key_id = "global_worker-auth"
+}
+
+
+recovery_kms_hcl = <<EOT
+kms "aead" {
+    purpose   = "recovery"
+    aead_type = "aes-gcm"
+    key       = "8fZBjCUfN0TzjEGLQleGY4+iE2AkOvCnjh7+p0GtRBQ="
+    key_id    = "global_recovery"
+}
+EOT
+}
+
+#resource "boundary_auth_method_oidc" "provider" {
+#  name                 = "Azure"
+#  description          = "OIDC auth method for Azure"
+#  scope_id             = "global"
+#  issuer               = "https://sts.windows.net/4aed35c0-c2db-42c6-8c17-efca15bfabfb/"
+#  client_id            = "5Ep7Q~Gs4Muqv8~a9StIe4sP4tgAGeZ7vmOO6"
+#  client_secret        = "982e897f-7d00-4542-8a39-864c1747811c"
+#  signing_algorithms   = ["RS256"]
+#  state                = "active-public"
+#  is_primary_for_scope = true
+  #api_url_prefix       = data.aws_lb.test.dns_name
+  #api_url_prefix       = "https://10.0.0.0:9200"
+#}
